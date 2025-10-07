@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 import json
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
+from aiortc.contrib.media import MediaPlayer, MediaStreamTrack
 
 SERVER_URL = "http://localhost:8080/offer"
 
@@ -11,6 +12,11 @@ async def run_client():
     pc = RTCPeerConnection(configuration=RTCConfiguration(iceServers=[RTCIceServer(urls=["stun:stun.l.google.com:19302"])]))
 
     data_channel = pc.createDataChannel("chat")
+    player = MediaPlayer("/home/shrubex/Music/music1.mp3")
+    if player.audio:
+        pc.addTrack(player.audio)
+        print("✅ Audio track added")
+    
     @data_channel.on("open")
     def on_open():
         print("Peer A data channel opened!")

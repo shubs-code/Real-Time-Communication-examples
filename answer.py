@@ -1,13 +1,34 @@
 import asyncio
+import subprocess
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
-from aiortc.contrib.media import MediaPlayer, MediaStreamTrack
+from aiortc.contrib.media import MediaPlayer, MediaStreamTrack, MediaRecorder
 import aiohttp_cors
 
 
 async def offer(request):
 
     pc = RTCPeerConnection(configuration=RTCConfiguration(iceServers=[RTCIceServer(urls=["stun:stun.l.google.com:19302"])]))
+
+
+    recorder = MediaRecorder("received1.wav")  # or "output.wav" if playback not supported
+ 
+    # 🎧 STEP 2 — When a track is received
+    @pc.on("track")
+    async def on_track(track):
+        print(f"📡 Received {track.kind} track")
+
+        if track.kind == "audio":
+            # Connect incoming audio to recorder
+            recorder.addTrack(track)
+            await recorder.start()
+            print("🎵 Audio playback started")
+            subprocess.Popen(["ffplay", "-nodisp", "-autoexit", "received.wav"])
+
+        @track.on("ended")
+        async def on_ended():
+            print("Audio track ended")
+            await recorder.stop()
 
     @pc.on("datachannel")
     def on_datachannel_b(channel):
